@@ -36,6 +36,11 @@
     <description></description>
   </property>
 
+  <property>
+    <name>tajo.storage.manager.kudu.class</name>
+    <value>org.apache.tajo.storage.kudu.KuduTablespace</value>
+  </property>
+
   <!--- Registered Scanner Handler -->
   <property>
     <name>tajo.storage.scanner-handler</name>

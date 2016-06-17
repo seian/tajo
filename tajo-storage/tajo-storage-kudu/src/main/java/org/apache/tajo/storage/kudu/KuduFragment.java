@@ -4,6 +4,7 @@ import org.apache.tajo.storage.fragment.Fragment;
 
 import org.apache.tajo.util.Bytes;
 import org.kududb.client.KuduClient;
+import org.kududb.master.Master;
 
 import java.net.URI;
 
@@ -18,6 +19,7 @@ public class KuduFragment extends Fragment<KuduFragment.KuduFragmentKey> {
     }
 
 
+
     @Override
     public boolean isEmpty() {
         return startKey.isEmpty() || endKey.isEmpty();
@@ -26,6 +28,7 @@ public class KuduFragment extends Fragment<KuduFragment.KuduFragmentKey> {
     @Override
     public String toString() {
         return "";
+
     }
 
     @Override

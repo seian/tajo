@@ -65,6 +65,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
+import static org.apache.calcite.util.BuiltInMethod.MERGE_JOIN;
 import static org.apache.tajo.catalog.proto.CatalogProtos.FragmentProto;
 import static org.apache.tajo.catalog.proto.CatalogProtos.PartitionType;
 import static org.apache.tajo.plan.serder.PlanProto.ColumnPartitionEnforcer.ColumnPartitionAlgorithm;

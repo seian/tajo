@@ -103,8 +103,10 @@ public class KuduTablespace extends Tablespace {
         columns.add(new ColumnSchema.ColumnSchemaBuilder("test", Type.INT8).key(true).build());
         org.kududb.Schema schema = new org.kududb.Schema(columns);
 
+        CreateTableOptions tableOptions = new CreateTableOptions();
+
+
         try {
-            CreateTableOptions tableOptions = new CreateTableOptions();
             List<String> list = new ArrayList<>();
             list.add("test");
             tableOptions.setRangePartitionColumns(list);

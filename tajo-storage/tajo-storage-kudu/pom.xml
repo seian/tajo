@@ -30,46 +30,44 @@
 
     <artifactId>tajo-storage-kudu</artifactId>
     <packaging>jar</packaging>
-    <name>Tajo Kudu storage</name>
+    <name>Tajo Kudu storage common</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <repositories>
+
         <repository>
             <id>cdh.repo</id>
-            <name>Cloudera Repositories</name>
+            <name>Cloudera Repository</name>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>repository.jboss.org</id>
+            <url>https://repository.jboss.org/nexus/content/repositories/releases/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>
 
-
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
                 <configuration>
                     <excludes>
-                        <exclude>derby.log</exclude>
-                        <exclude>src/test/resources/dataset/**</exclude>
-                        <exclude>src/test/resources/queries/**</exclude>
-                        <exclude>src/test/resources/results/**</exclude>
-                        <exclude>src/test/resources/pgsql/**</exclude>
+                        <exclude>src/test/resources/*.sql</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -83,6 +81,16 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <tajo.test.enabled>TRUE</tajo.test.enabled>
+                    </systemProperties>
+                    <argLine>-Xms128m -Xmx1024m -Dfile.encoding=UTF-8</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.4</version>
                 <executions>
@@ -93,13 +101,70 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-protobuf-generated-sources-directory</id>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="target/generated-sources/proto" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2</version>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <executable>protoc</executable>
+                            <arguments>
+                                <argument>-Isrc/main/proto/</argument>
+                                <argument>--proto_path=../../tajo-common/src/main/proto</argument>
+                                <argument>--proto_path=../../tajo-catalog/tajo-catalog-common/src/main/proto</argument>
+                                <argument>--java_out=target/generated-sources/proto</argument>
+                                <argument>src/main/proto/KuduFragmentProtos.proto</argument>
+                            </arguments>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>target/generated-sources/proto</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
@@ -126,112 +191,18 @@
             <artifactId>tajo-storage-common</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.tajo</groupId>
-            <artifactId>tajo-storage-hdfs</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tajo</groupId>
-            <artifactId>tajo-storage-jdbc</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tajo</groupId>
-            <artifactId>tajo-cluster-tests</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-el</groupId>
-                    <artifactId>commons-el</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>tomcat</groupId>
-                    <artifactId>jasper-runtime</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>tomcat</groupId>
-                    <artifactId>jasper-compiler</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.mortbay.jetty</groupId>
-                    <artifactId>jsp-2.1-jetty</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.sun.jersey.jersey-test-framework</groupId>
-                    <artifactId>jersey-test-framework-grizzly2</artifactId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>netty-all</artifactId>
-                    <groupId>io.netty</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-hdfs</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-el</groupId>
-                    <artifactId>commons-el</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>tomcat</groupId>
-                    <artifactId>jasper-runtime</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>tomcat</groupId>
-                    <artifactId>jasper-compiler</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.mortbay.jetty</groupId>
-                    <artifactId>jsp-2.1-jetty</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.sun.jersey.jersey-test-framework</groupId>
-                    <artifactId>jersey-test-framework-grizzly2</artifactId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>netty-all</artifactId>
-                    <groupId>io.netty</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>testing-postgresql-server</artifactId>
-            <version>0.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>15.0</version>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.kududb</groupId>
             <artifactId>kudu-client</artifactId>
@@ -240,24 +211,6 @@
     </dependencies>
 
     <profiles>
-        <profile>
-            <!-- Run unit tests in tajo-storage-pgsql, whereas it is disabled as by default. -->
-            <id>test-storage-pgsql</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration combine.self="override">
-                            <systemProperties>
-                                <tajo.test.enabled>TRUE</tajo.test.enabled>
-                            </systemProperties>
-                            <argLine>-Xms128m -Xmx1024m -Dfile.encoding=UTF-8</argLine>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>docs</id>
             <activation>

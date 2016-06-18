@@ -1,5 +1,6 @@
 package org.apache.tajo.storage.kudu;
 
+import com.google.common.collect.Lists;
 import net.minidev.json.JSONObject;
 import org.apache.hadoop.fs.Path;
 import org.apache.tajo.ExecutionBlockId;
@@ -57,24 +58,29 @@ public class KuduTablespace extends Tablespace {
     }
 
     @Override
-    public List<Fragment> getSplits(String inputSourceId, TableDesc tableDesc, boolean requireSort, @Nullable EvalNode filterCondition) throws IOException, TajoException {
-
+    public List<Fragment> getSplits(String inputSourceId, TableDesc tableDesc, boolean requireSort,
+                                    @Nullable EvalNode filterCondition) throws IOException, TajoException {
         try {
             if(client.tableExists(tableDesc.getName())) {
                 KuduTable kuduTable = client.openTable(tableDesc.getName());
+                List<String> hostsList = client.listTabletServers().getTabletServersList();
+                String[] hostnames = hostsList.toArray(new String[0]);
                 List<LocatedTablet> tabletList = kuduTable.getTabletsLocations(2000);
                 List<KuduFragment> fragmentList = new ArrayList<>();
+
                 for(LocatedTablet tablet : tabletList) {
                     Partition p = tablet.getPartition();
                     fragmentList.add(new KuduFragment(BuiltinFragmentKinds.KUDU, tableDesc.getUri(),
                             inputSourceId, p.getPartitionKeyStart(), p.getPartitionKeyEnd(),
-                            TajoConstants.UNKNOWN_LENGTH, extractHosts(uri));
+                            TajoConstants.UNKNOWN_LENGTH, hostnames));
+
                 }
+
+                return Lists.newArrayList((Fragment)fragmentList);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
         return null;
     }

@@ -25,4 +25,11 @@ option java_generate_equals_and_hash = true;
 import "CatalogProtos.proto";
 
 message KuduFragmentProto {
+    required string uri = 1;
+    required string input_source = 2;
+    required string kudu_table_name = 3;
+    required bytes start_key = 4;
+    required bytes stop_key = 5;
+    required int64 length = 6;
+    optional string hosts = 7;
 }
